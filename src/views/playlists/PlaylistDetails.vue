@@ -9,7 +9,7 @@
       <h2>{{ playlist.title }}</h2>
       <p class="username">Created by {{ playlist.userName }}</p>
       <p class="description">{{ playlist.description }}</p>
-      <button @click="handledelete" v-if="ownership">Delete Playlist</button>
+      <button v-if="ownership" @click="handleDelete">Delete Playlist</button>
     </div>
 
     <!-- song list -->
@@ -20,25 +20,31 @@
 </template>
 
 <script>
-import getDocument from "@/composables/getDocument";
-import getUser from "../../composables/getUser";
+import useStorage from "@/composables/useStorage";
 import useDocument from "@/composables/useDocument";
+import getDocument from "@/composables/getDocument";
+import getUser from "@/composables/getUser";
 import { computed } from "vue";
+import { useRouter } from "vue-router";
 export default {
   props: ["id"],
   setup(props) {
     const { error, document: playlist } = getDocument("playlists", props.id);
     const { user } = getUser();
-    const { deleteDoc } = useDocument("playlist", props.id);
+    const { deleteDoc } = useDocument("playlists", props.id);
+    const { deleteImage } = useStorage();
+    const router = useRouter();
     const ownership = computed(() => {
       return (
-        playlist.value && user.value && user.value.uid === playlist.value.userId
+        playlist.value && user.value && user.value.uid == playlist.value.userId
       );
     });
-    const handledelete = async () => {
+    const handleDelete = async () => {
+      await deleteImage(playlist.value.filePath);
       await deleteDoc();
+      router.push({ name: "Home" });
     };
-    return { error, playlist, user, ownership, handledelete };
+    return { error, playlist, ownership, handleDelete };
   },
 };
 </script>
